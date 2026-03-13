@@ -23,10 +23,28 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<MaterialStatus | 'All'>('All');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [supplierFilter, setSupplierFilter] = useState<string>('All');
+  const [contractorFilter, setContractorFilter] = useState<string>('All');
+  const [areaFilter, setAreaFilter] = useState<string>('All');
 
   const categories = useMemo(() => {
-    const cats = new Set(materials.map((m) => m.category));
-    return ['All', ...Array.from(cats)];
+    const cats = new Set(materials.map((m) => m.category).filter(Boolean));
+    return ['All', ...Array.from(cats).sort()];
+  }, [materials]);
+
+  const suppliers = useMemo(() => {
+    const sups = new Set(materials.map((m) => m.supplier).filter(Boolean));
+    return ['All', ...Array.from(sups).sort()];
+  }, [materials]);
+
+  const contractors = useMemo(() => {
+    const cons = new Set(materials.map((m) => m.contractor).filter(Boolean));
+    return ['All', ...Array.from(cons).sort()];
+  }, [materials]);
+
+  const areas = useMemo(() => {
+    const ars = new Set(materials.map((m) => m.area).filter(Boolean));
+    return ['All', ...Array.from(ars).sort()];
   }, [materials]);
 
   const filteredMaterials = useMemo(() => {
@@ -38,10 +56,13 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
         m.contractor.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
       const matchesCategory = categoryFilter === 'All' || m.category === categoryFilter;
+      const matchesSupplier = supplierFilter === 'All' || m.supplier === supplierFilter;
+      const matchesContractor = contractorFilter === 'All' || m.contractor === contractorFilter;
+      const matchesArea = areaFilter === 'All' || m.area === areaFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesSearch && matchesStatus && matchesCategory && matchesSupplier && matchesContractor && matchesArea;
     });
-  }, [materials, search, statusFilter, categoryFilter]);
+  }, [materials, search, statusFilter, categoryFilter, supplierFilter, contractorFilter, areaFilter]);
 
   const statusSummary = useMemo(() => {
     const summary = {
@@ -56,6 +77,17 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
     });
     return summary;
   }, [filteredMaterials]);
+
+  const isFiltered = search !== '' || statusFilter !== 'All' || categoryFilter !== 'All' || supplierFilter !== 'All' || contractorFilter !== 'All' || areaFilter !== 'All';
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('All');
+    setCategoryFilter('All');
+    setSupplierFilter('All');
+    setContractorFilter('All');
+    setAreaFilter('All');
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full print:border-none print:shadow-none print:block">
@@ -89,38 +121,51 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
       </div>
 
       {/* Filters */}
-      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center print:hidden">
-        <div className="relative w-full sm:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+      <div className="p-4 border-b border-gray-100 flex flex-col gap-4 print:hidden">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          <div className="relative w-full lg:w-96">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="Tìm kiếm mã, tên vật tư, nhà cung cấp..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {isFiltered && (
+              <button
+                onClick={clearFilters}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                Xóa lọc
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Tìm kiếm mã, tên vật tư, nhà cung cấp..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              <Printer className="w-4 h-4" />
+              Xuất PDF
+            </button>
+            <button
+              onClick={onAdd}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" />
+              Thêm vật tư
+            </button>
+          </div>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
-          >
-            <Printer className="w-4 h-4" />
-            Xuất PDF
-          </button>
-          <button
-            onClick={onAdd}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" />
-            Thêm vật tư
-          </button>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-400" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <Filter className="h-4 w-4 text-gray-400 shrink-0" />
             <select
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg"
+              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
             >
@@ -132,17 +177,58 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
               <option value="No Sample Required">Không cần mẫu</option>
             </select>
           </div>
-          <select
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat === 'All' ? 'Tất cả hạng mục' : cat}
-              </option>
-            ))}
-          </select>
+
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <select
+              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="All">Tất cả hạng mục</option>
+              {categories.filter(c => c !== 'All').map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <select
+              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
+              value={areaFilter}
+              onChange={(e) => setAreaFilter(e.target.value)}
+            >
+              <option value="All">Tất cả khu vực</option>
+              {areas.filter(a => a !== 'All').map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <select
+              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
+              value={contractorFilter}
+              onChange={(e) => setContractorFilter(e.target.value)}
+            >
+              <option value="All">Tất cả nhà thầu</option>
+              {contractors.filter(c => c !== 'All').map((con) => (
+                <option key={con} value={con}>{con}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+            <select
+              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
+              value={supplierFilter}
+              onChange={(e) => setSupplierFilter(e.target.value)}
+            >
+              <option value="All">Tất cả nhà cung cấp</option>
+              {suppliers.filter(s => s !== 'All').map((sup) => (
+                <option key={sup} value={sup}>{sup}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
