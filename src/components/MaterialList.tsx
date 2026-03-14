@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { Material, MaterialStatus } from '../data/materials';
-import { Search, Filter, Eye, Plus, Edit2, Trash2, Printer } from 'lucide-react';
+import { Search, Filter, Eye, Plus, Edit2, Trash2, Printer, X, Layers, MapPin, HardHat, Truck, Activity, ChevronDown, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Listbox, Transition } from '@headlessui/react';
 
 interface MaterialListProps {
   materials: Material[];
@@ -26,6 +27,8 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
   const [supplierFilter, setSupplierFilter] = useState<string>('All');
   const [contractorFilter, setContractorFilter] = useState<string>('All');
   const [areaFilter, setAreaFilter] = useState<string>('All');
+
+  const [showFilters, setShowFilters] = useState(true);
 
   const categories = useMemo(() => {
     const cats = new Set(materials.map((m) => m.category).filter(Boolean));
@@ -89,6 +92,74 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
     setAreaFilter('All');
   };
 
+  const FilterDropdown = ({ 
+    label, 
+    value, 
+    onChange, 
+    options, 
+    icon: Icon 
+  }: { 
+    label: string; 
+    value: string; 
+    onChange: (val: string) => void; 
+    options: string[]; 
+    icon: any 
+  }) => {
+    return (
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+          <Icon className="w-3 h-3" /> {label}
+        </label>
+        <Listbox value={value} onChange={onChange}>
+          <div className="relative">
+            <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-white py-2.5 pl-3 pr-10 text-left border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm shadow-sm transition-all hover:bg-gray-50/50">
+              <span className="block truncate font-medium text-gray-700">
+                {value === 'All' ? 'Tất cả' : value}
+              </span>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronDown className="h-4 w-4 text-gray-400" aria-hidden="true" />
+              </span>
+            </Listbox.Button>
+            <Transition
+              as={Fragment}
+              leave="transition ease-in duration-100"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <Listbox.Options className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                {options.map((option, idx) => (
+                  <Listbox.Option
+                    key={idx}
+                    className={({ active }) =>
+                      cn(
+                        "relative cursor-pointer select-none py-2 pl-10 pr-4 transition-colors",
+                        active ? "bg-indigo-50 text-indigo-900" : "text-gray-900"
+                      )
+                    }
+                    value={option}
+                  >
+                    {({ selected }) => (
+                      <>
+                        <span className={cn("block truncate", selected ? "font-semibold" : "font-normal")}>
+                          {option === 'All' ? 'Tất cả' : option}
+                        </span>
+                        {selected ? (
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600">
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                  </Listbox.Option>
+                ))}
+              </Listbox.Options>
+            </Transition>
+          </div>
+        </Listbox>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full print:border-none print:shadow-none print:block">
       {/* Print Summary Table */}
@@ -120,40 +191,67 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
         </table>
       </div>
 
-      {/* Filters */}
-      <div className="p-4 border-b border-gray-100 flex flex-col gap-4 print:hidden">
-        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-          <div className="relative w-full lg:w-96">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
+      {/* Filters Section */}
+      <div className="border-b border-gray-100 bg-gray-50/30 print:hidden">
+        <div className="p-5 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          <div className="flex items-center gap-4 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-96 group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-12 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all shadow-sm"
+                placeholder="Tìm kiếm mã, tên vật tư, nhà cung cấp..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Tìm kiếm mã, tên vật tư, nhà cung cấp..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-medium shadow-sm",
+                showFilters 
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700" 
+                  : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+              )}
+            >
+              <Filter className="w-4 h-4" />
+              {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+              {isFiltered && !showFilters && (
+                <span className="flex h-2 w-2 rounded-full bg-indigo-600 ml-1"></span>
+              )}
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto">
             {isFiltered && (
               <button
                 onClick={clearFilters}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
               >
+                <X className="w-4 h-4" />
                 Xóa lọc
               </button>
             )}
-          </div>
-          <div className="flex flex-wrap gap-3 w-full lg:w-auto">
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
+              className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium shadow-sm"
             >
               <Printer className="w-4 h-4" />
               Xuất PDF
             </button>
             <button
               onClick={onAdd}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium whitespace-nowrap"
+              className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md shadow-indigo-200 active:scale-95"
             >
               <Plus className="w-4 h-4" />
               Thêm vật tư
@@ -161,75 +259,45 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-            <select
-              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-            >
-              <option value="All">Tất cả trạng thái</option>
-              <option value="Approved">Đã phê duyệt</option>
-              <option value="Pending">Đang chờ duyệt</option>
-              <option value="Rejected">Bị từ chối</option>
-              <option value="Omitted">Omitted</option>
-              <option value="No Sample Required">Không cần mẫu</option>
-            </select>
+        {showFilters && (
+          <div className="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <FilterDropdown 
+              label="Trạng thái" 
+              value={statusFilter} 
+              onChange={(val) => setStatusFilter(val as any)} 
+              options={['All', 'Approved', 'Pending', 'Rejected', 'Omitted', 'No Sample Required']} 
+              icon={Activity} 
+            />
+            <FilterDropdown 
+              label="Hạng mục" 
+              value={categoryFilter} 
+              onChange={setCategoryFilter} 
+              options={categories} 
+              icon={Layers} 
+            />
+            <FilterDropdown 
+              label="Khu vực" 
+              value={areaFilter} 
+              onChange={setAreaFilter} 
+              options={areas} 
+              icon={MapPin} 
+            />
+            <FilterDropdown 
+              label="Nhà thầu" 
+              value={contractorFilter} 
+              onChange={setContractorFilter} 
+              options={contractors} 
+              icon={HardHat} 
+            />
+            <FilterDropdown 
+              label="Nhà cung cấp" 
+              value={supplierFilter} 
+              onChange={setSupplierFilter} 
+              options={suppliers} 
+              icon={Truck} 
+            />
           </div>
-
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <select
-              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="All">Tất cả hạng mục</option>
-              {categories.filter(c => c !== 'All').map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <select
-              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
-              value={areaFilter}
-              onChange={(e) => setAreaFilter(e.target.value)}
-            >
-              <option value="All">Tất cả khu vực</option>
-              {areas.filter(a => a !== 'All').map((area) => (
-                <option key={area} value={area}>{area}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <select
-              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
-              value={contractorFilter}
-              onChange={(e) => setContractorFilter(e.target.value)}
-            >
-              <option value="All">Tất cả nhà thầu</option>
-              {contractors.filter(c => c !== 'All').map((con) => (
-                <option key={con} value={con}>{con}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
-            <select
-              className="block w-full bg-transparent border-none focus:ring-0 sm:text-sm"
-              value={supplierFilter}
-              onChange={(e) => setSupplierFilter(e.target.value)}
-            >
-              <option value="All">Tất cả nhà cung cấp</option>
-              {suppliers.filter(s => s !== 'All').map((sup) => (
-                <option key={sup} value={sup}>{sup}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Table */}
@@ -251,6 +319,9 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ngày Trình
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ngày Cấp Hàng Yêu Cầu
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng Thái
@@ -292,10 +363,12 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {material.submissionDate}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {material.requiredDeliveryDate || '-'}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={cn(
-                      'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border',
+                    <span className={cn(
+                      'px-2.5 py-1 inline-flex text-[10px] leading-4 font-bold rounded-lg border uppercase tracking-wider',
                       statusColors[material.status]
                     )}
                   >
@@ -343,8 +416,33 @@ export function MaterialList({ materials, onSelect, onAdd, onEdit, onDelete }: M
             ))}
             {filteredMaterials.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                  Không tìm thấy vật tư nào phù hợp với điều kiện lọc.
+                <td colSpan={8} className="px-6 py-20 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="p-4 bg-gray-50 rounded-full">
+                      <Search className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-base font-medium text-gray-900">Không tìm thấy vật tư</p>
+                      <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                        Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm để tìm thấy kết quả mong muốn.
+                      </p>
+                    </div>
+                    {(search || categoryFilter !== 'All' || contractorFilter !== 'All' || areaFilter !== 'All' || supplierFilter !== 'All' || statusFilter !== 'All') && (
+                      <button
+                        onClick={() => {
+                          setSearch('');
+                          setCategoryFilter('All');
+                          setContractorFilter('All');
+                          setAreaFilter('All');
+                          setSupplierFilter('All');
+                          setStatusFilter('All');
+                        }}
+                        className="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                      >
+                        Xóa tất cả bộ lọc
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )}

@@ -12,6 +12,7 @@ export interface Material {
   contractor: string;
   submissionDate: string;
   approvalDate: string;
+  requiredDeliveryDate?: string;
   status: MaterialStatus;
   feedback: string;
   specs: string;
@@ -30,8 +31,9 @@ export const mockMaterials: Material[] = [
     area: '',
     supplier: '',
     contractor: '',
-    submissionDate: '',
-    approvalDate: '',
+    submissionDate: '15/01/2024',
+    approvalDate: '20/01/2024',
+    requiredDeliveryDate: '01/03/2024',
     status: 'Pending',
     feedback: '',
     specs: 'Đèn khẩn cấp gắn âm trần\nThân đèn: ABS/Polycarbonate\nCông suất: 3W\nĐiện áp: 220-240V, 50/60Hz.\nIP20\nThời gian lưu điện: 3 giờ\nPin: Lion\nBao gồm tem PCCC năm 2023',
@@ -96,7 +98,7 @@ export const mockMaterials: Material[] = [
     id: 'MEP-LIGHT-DL-01-PK',
     type: 'MEP',
     category: 'Đèn chiếu sáng và hệ thống exit sự cố',
-    code: 'DL-01',
+    code: 'DL-01-PK',
     name: 'Đèn downlight âm trần led 1x12W - 125 LM/W cho phòng khách',
     area: 'Phòng khách',
     supplier: '',

@@ -150,6 +150,15 @@ export function MaterialDetail({ material, isOpen, onClose, onUpdateStatus }: Ma
                             </p>
                           </div>
                         </div>
+                        <div className="flex items-start gap-3">
+                          <Calendar className="w-5 h-5 text-indigo-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-500">Ngày cấp hàng yêu cầu</p>
+                            <p className="text-base text-indigo-900 font-medium">
+                              {material.requiredDeliveryDate || 'Chưa xác định'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Specs */}

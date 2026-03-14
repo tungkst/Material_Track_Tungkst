@@ -42,6 +42,7 @@ export function MaterialFormModal({ isOpen, onClose, onSave, initialData, existi
         contractor: '',
         submissionDate: '',
         approvalDate: '',
+        requiredDeliveryDate: '',
         feedback: '',
         specs: '',
         imageUrl: '',
@@ -63,15 +64,13 @@ export function MaterialFormModal({ isOpen, onClose, onSave, initialData, existi
       // If editing, ignore the current material
       if (initialData && m.id === initialData.id) return false;
       
-      // Check if code or name matches (case-insensitive)
-      const codeMatch = m.code.toLowerCase() === (formData.code || '').toLowerCase();
-      const nameMatch = m.name.toLowerCase() === (formData.name || '').toLowerCase();
-      
-      return codeMatch || nameMatch;
+      // Check if code matches (case-insensitive)
+      if (!formData.code) return false;
+      return m.code.trim().toLowerCase() === formData.code.trim().toLowerCase();
     });
 
     if (isDuplicate) {
-      alert('Mã vật tư hoặc tên vật tư đã tồn tại trong hệ thống. Vui lòng kiểm tra lại!');
+      alert(`Mã vật tư "${formData.code}" đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác!`);
       return;
     }
 
@@ -272,6 +271,17 @@ export function MaterialFormModal({ isOpen, onClose, onSave, initialData, existi
                           name="approvalDate"
                           placeholder="DD/MM/YYYY"
                           value={formData.approvalDate || ''}
+                          onChange={handleChange}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Ngày cấp hàng yêu cầu</label>
+                        <input
+                          type="text"
+                          name="requiredDeliveryDate"
+                          placeholder="DD/MM/YYYY"
+                          value={formData.requiredDeliveryDate || ''}
                           onChange={handleChange}
                           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                         />
