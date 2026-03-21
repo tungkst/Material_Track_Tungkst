@@ -1,0 +1,176 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: materials
+    // Document ID: materialId
+    // Fields:
+    //   - id: string (required)
+    //   - type: string (required, enum)
+    //   - category: string (required)
+    //   - code: string (required)
+    //   - name: string (required)
+    //   - area: string
+    //   - supplier: string
+    //   - contractor: string
+    //   - submissionDate: string
+    //   - approvalDate: string
+    //   - requiredDeliveryDate: string
+    //   - status: string (required, enum)
+    //   - feedback: string
+    //   - specs: string
+    //   - technicalSpecs: string
+    //   - notes: string
+    //   - hasSample: bool
+    //   - imageUrl: string
+    //   - providedBy: string (enum)
+    //   - procurementStatus: string (enum)
+    //   - boqQuantity: number
+    //   - orderedQuantity: number
+    //   - receivedQuantity: number
+    //   - unit: string
+    //   - leadTime: number
+    //   - latestApprovalDate: string
+    //   - expectedArrivalDate: string
+    //
+    // Collection: milestones
+    // Document ID: milestoneId
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required)
+    //   - date: string (required)
+    //   - actualDate: string
+    //   - type: string (enum)
+    //   - status: string (required, enum)
+    //   - description: string
+    //
+    // Collection: taskActuals
+    // Document ID: taskId
+    // Fields:
+    //   - actualFinish: string (required)
+    //   - updatedAt: string (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email.lower() == "tungkst@gmail.com" && request.auth.token.email_verified == true)
+        );
+    }
+
+    function isValidMaterial(data) {
+      return data.keys().hasAll(['id', 'type', 'category', 'code', 'name', 'status']) &&
+             data.id is string &&
+             data.type in ['Fitout', 'Architecture', 'Furniture', 'MEP', 'BasicFinish', 'Decor', 'Equipment'] &&
+             data.category is string &&
+             data.code is string &&
+             data.name is string &&
+             data.status in ['Approved', 'Approved as Noted', 'Revise & Resubmit', 'Rejected', 'Pending', 'Omitted', 'No Sample Required'] &&
+             (!('area' in data) || data.area is string) &&
+             (!('supplier' in data) || data.supplier is string) &&
+             (!('contractor' in data) || data.contractor is string) &&
+             (!('submissionDate' in data) || data.submissionDate is string) &&
+             (!('approvalDate' in data) || data.approvalDate is string) &&
+             (!('requiredDeliveryDate' in data) || data.requiredDeliveryDate is string) &&
+             (!('feedback' in data) || data.feedback is string) &&
+             (!('specs' in data) || data.specs is string) &&
+             (!('technicalSpecs' in data) || data.technicalSpecs is string) &&
+             (!('notes' in data) || data.notes is string) &&
+             (!('hasSample' in data) || data.hasSample is bool) &&
+             (!('imageUrl' in data) || data.imageUrl is string) &&
+             (!('providedBy' in data) || data.providedBy in ['Contractor', 'Client']) &&
+             (!('procurementStatus' in data) || data.procurementStatus in ['Not Ordered', 'Ordered', 'In Transit', 'Received']) &&
+             (!('boqQuantity' in data) || data.boqQuantity is number) &&
+             (!('orderedQuantity' in data) || data.orderedQuantity is number) &&
+             (!('receivedQuantity' in data) || data.receivedQuantity is number) &&
+             (!('unit' in data) || data.unit is string) &&
+             (!('leadTime' in data) || data.leadTime is number) &&
+             (!('latestApprovalDate' in data) || data.latestApprovalDate is string) &&
+             (!('expectedArrivalDate' in data) || data.expectedArrivalDate is string) &&
+             (!('createdBy' in data) || data.createdBy is string) &&
+             (!('sampleMatchesSpec' in data) || data.sampleMatchesSpec is bool) &&
+             (!('sampleQuantity' in data) || data.sampleQuantity is number) &&
+             (!('submittalImageUrl' in data) || data.submittalImageUrl is string) &&
+             (!('submittalNo' in data) || data.submittalNo is string) &&
+             (!('revision' in data) || data.revision is string);
+    }
+
+    function isValidMilestone(data) {
+      return data.keys().hasAll(['id', 'name', 'date', 'status']) &&
+             data.id is string &&
+             data.name is string &&
+             data.date is string &&
+             data.status in ['Completed', 'Upcoming', 'Delayed'] &&
+             (!('actualDate' in data) || data.actualDate is string) &&
+             (!('type' in data) || data.type in ['Critical', 'Standard', 'Payment', 'Approval']) &&
+             (!('description' in data) || data.description is string);
+    }
+
+    function isValidTaskActual(data) {
+      return data.keys().hasAll(['id', 'actualFinish', 'updatedAt']) &&
+             data.id is string &&
+             data.actualFinish is string &&
+             data.updatedAt is string;
+    }
+
+    function isValidSiteLog(data) {
+      return data.keys().hasAll(['id', 'date', 'laborCount', 'workContent', 'createdAt']) &&
+             data.id is string &&
+             data.date is string &&
+             data.laborCount is number &&
+             data.laborCount >= 0 &&
+             data.workContent is string &&
+             data.workContent.size() < 5000 &&
+             data.createdAt is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /materials/{materialId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMaterial(request.resource.data);
+      allow update: if isAuthenticated() && isValidMaterial(request.resource.data) && (request.auth.uid == resource.data.createdBy || isAdmin());
+      allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.createdBy);
+    }
+
+    match /milestones/{milestoneId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMilestone(request.resource.data);
+      allow update: if isAuthenticated() && isValidMilestone(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /siteLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSiteLog(request.resource.data);
+      allow update: if isAuthenticated() && isValidSiteLog(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /taskActuals/{taskId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidTaskActual(request.resource.data);
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

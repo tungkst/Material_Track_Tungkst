@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Material": {
+      "title": "Material",
+      "description": "A material item used in the project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "type": { "type": "string", "enum": ["Fitout", "Architecture", "Furniture", "MEP", "BasicFinish", "Decor", "Equipment"] },
+        "category": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "area": { "type": "string" },
+        "supplier": { "type": "string" },
+        "contractor": { "type": "string" },
+        "submissionDate": { "type": "string" },
+        "approvalDate": { "type": "string" },
+        "requiredDeliveryDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["Approved", "Approved as Noted", "Revise & Resubmit", "Rejected", "Pending", "Omitted", "No Sample Required"] },
+        "feedback": { "type": "string" },
+        "specs": { "type": "string" },
+        "technicalSpecs": { "type": "string" },
+        "notes": { "type": "string" },
+        "hasSample": { "type": "boolean" },
+        "imageUrl": { "type": "string" },
+        "providedBy": { "type": "string", "enum": ["Contractor", "Client"] },
+        "procurementStatus": { "type": "string", "enum": ["Not Ordered", "Ordered", "In Transit", "Received"] },
+        "boqQuantity": { "type": "number" },
+        "orderedQuantity": { "type": "number" },
+        "receivedQuantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "leadTime": { "type": "number" },
+        "latestApprovalDate": { "type": "string" },
+        "expectedArrivalDate": { "type": "string" }
+      },
+      "required": ["id", "type", "category", "code", "name", "status"]
+    },
+    "Milestone": {
+      "title": "Milestone",
+      "description": "A key date or milestone in the project schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string", "enum": ["Critical", "Standard", "Payment", "Approval"] },
+        "status": { "type": "string", "enum": ["Completed", "Upcoming", "Delayed"] },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "name", "date", "status"]
+    }
+  },
+  "firestore": {
+    "materials": {
+      "schema": "Material",
+      "description": "Collection of all materials"
+    },
+    "milestones": {
+      "schema": "Milestone",
+      "description": "Collection of project milestones"
+    }
+  }
+}

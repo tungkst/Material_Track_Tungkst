@@ -1,5 +1,5 @@
 {
-  "name": "MaterialTrack",
-  "description": "Ứng dụng quản lý và theo dõi tình trạng đệ trình vật liệu mẫu cho dự án Masterise Cao Xà Lá.",
+  "name": "Cao Xà Lá Material Management",
+  "description": "Phần mềm quản lý vật liệu mẫu, vật tư dự án căn hộ mẫu Cao Xà Lá, được quản lý bởi Tungkst - một điều phối thiết kế, BIM Coordinator",
   "requestFramePermissions": []
 }
